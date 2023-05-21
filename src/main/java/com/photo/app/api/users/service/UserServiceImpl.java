@@ -20,19 +20,22 @@ public class UserServiceImpl implements UsersService {
 
 	private UserRepository userRepository;
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
-	
+
 	private ModelMapper modelMapper;
 
 	public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
 		this.userRepository = userRepository;
 		this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-		
+
 		this.modelMapper = new ModelMapper();
 		this.modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
 	}
 
 	@Override
 	public UserDto createUser(UserDto userDetails) {
+
+		if (userRepository.findByEmail(userDetails.getEmail()) != null)
+			throw new RuntimeException("Record already exists.");
 
 		userDetails.setUserId(UUID.randomUUID().toString());
 		userDetails.setEncryptedPassword(bCryptPasswordEncoder.encode(userDetails.getPassword()));
@@ -58,12 +61,12 @@ public class UserServiceImpl implements UsersService {
 
 	@Override
 	public UserDto getUserDetailsByEmail(String email) {
-		
+
 		UserEntity userEntity = userRepository.findByEmail(email);
-		
+
 		if (userEntity == null)
 			throw new UsernameNotFoundException(email);
-		
+
 		UserDto userDto = this.modelMapper.map(userEntity, UserDto.class);
 		return userDto;
 	}
